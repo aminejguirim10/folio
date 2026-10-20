@@ -1,0 +1,32 @@
+# Build artefacts
+dist/
+build/
+*.tsbuildinfo
+
+# Dependencies
+node_modules/
+
+
+# Environment — never commit real keys
+.env
+.env.local
+.env.*.local
+
+# Runtime data: vector store, uploads, logs
+backend/data/
+backend/uploads/
+backend/chroma_db/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/

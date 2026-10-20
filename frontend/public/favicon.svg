@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Folio">
+  <!--
+    Site icon. Deliberately the same treatment as the in-app logo tile
+    (ink plate, paper mark) so the tab and the sidebar read as one product.
+
+    The mark is a *stack* of two sheets rather than a single page: the app
+    ingests a library of mixed formats now (PDF, Office, data, images), and
+    one lone document no longer describes it. Geometry is kept to plain
+    rounded rects and two rules so it stays legible at 16 px.
+  -->
+  <rect width="32" height="32" rx="7" fill="#211e1c" />
+  <g fill="none" stroke="#faf7f5" stroke-width="2" stroke-linejoin="round">
+    <rect x="6" y="7" width="13" height="16" rx="2.6" opacity="0.55" />
+    <rect x="12" y="10" width="13" height="16" rx="2.6" />
+    <path d="M15.5 16h7M15.5 20h4.5" stroke-linecap="round" />
+  </g>
+</svg>

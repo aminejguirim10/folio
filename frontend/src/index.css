@@ -1,0 +1,285 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- design tokens ------------------------------------------------------
+ * Editorial document-reader palette. Warm paper, deep ink, ember accent.
+ * Each value is H S% L% so Tailwind can wrap it in `hsl(...)`.
+ * Dark mode inverts paper/ink and re-tints the accents.
+ */
+@layer base {
+  :root {
+    --background: 36 33% 97%;           /* warm off-white */
+    --foreground: 24 9% 12%;            /* deep ink */
+
+    --card: 0 0% 100%;
+    --card-foreground: 24 9% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 9% 12%;
+
+    --primary: 24 9% 12%;               /* ink-black for primary buttons */
+    --primary-foreground: 36 33% 97%;
+
+    --secondary: 30 14% 92%;
+    --secondary-foreground: 24 9% 12%;
+
+    --muted: 30 14% 92%;
+    --muted-foreground: 24 6% 38%;
+
+    --accent: 30 14% 92%;
+    --accent-foreground: 24 9% 12%;
+
+    --destructive: 8 70% 48%;
+    --destructive-foreground: 36 33% 97%;
+
+    --border: 30 14% 88%;
+    --input: 30 14% 88%;
+    --ring: 24 9% 12%;
+
+    --radius: 0.75rem;
+
+    /* Bespoke tokens — referenced from Tailwind colors above. */
+    --paper: 36 33% 97%;
+    --ink:   24 9% 12%;
+    --ember: 18 78% 50%;   /* burnt-orange accent for citations + status */
+
+    --font-serif: "Fraunces", "Instrument Serif", Georgia, serif;
+    --font-sans:  "Geist", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .dark {
+    --background: 24 9% 8%;
+    --foreground: 36 22% 92%;
+    --card: 24 9% 11%;
+    --card-foreground: 36 22% 92%;
+    --popover: 24 9% 11%;
+    --popover-foreground: 36 22% 92%;
+    --primary: 36 22% 92%;
+    --primary-foreground: 24 9% 8%;
+    --secondary: 24 6% 16%;
+    --secondary-foreground: 36 22% 92%;
+    --muted: 24 6% 16%;
+    --muted-foreground: 24 6% 64%;
+    --accent: 24 6% 16%;
+    --accent-foreground: 36 22% 92%;
+    --destructive: 8 70% 48%;
+    --destructive-foreground: 36 22% 92%;
+    --border: 24 6% 20%;
+    --input: 24 6% 20%;
+    --ring: 36 22% 92%;
+
+    --paper: 24 9% 8%;
+    --ink:   36 22% 92%;
+    --ember: 22 88% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  /* Nothing in this app should ever scroll the page sideways. Long
+     filenames and citation chips were pushing the layout wider than the
+     viewport; this is the global backstop for anything the individual
+     components didn't handle. */
+  html,
+  body {
+    height: 100%;
+    overflow-x: hidden;
+  }
+
+  #root {
+    height: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    /* Subtle paper grain — two layered radial gradients, very low opacity. */
+    background-image:
+      radial-gradient(hsl(var(--ink) / 0.025) 1px, transparent 1px),
+      radial-gradient(hsl(var(--ink) / 0.018) 1px, transparent 1px);
+    background-size: 3px 3px, 7px 7px;
+    background-position: 0 0, 1px 2px;
+  }
+
+  ::selection {
+    background-color: hsl(var(--ember) / 0.25);
+    color: hsl(var(--ink));
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-serif);
+    font-feature-settings: "ss01", "ss02";
+    letter-spacing: -0.015em;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Inline streaming indicator at the tail of the answer.
+     A soft pulsing dot, not a hard blinking block: once text is arriving the
+     caret must stay peripheral to the answer rather than compete with it. */
+  .caret {
+    display: inline-block;
+    width: 0.42em;
+    height: 0.42em;
+    margin-left: 0.3em;
+    vertical-align: 0.08em;
+    border-radius: 9999px;
+    background-color: hsl(var(--ember) / 0.7);
+    animation: caret-pulse 1.5s ease-in-out infinite;
+  }
+
+  /* Declared here rather than in tailwind.config.js on purpose: Tailwind only
+     emits a theme keyframe when the matching `animate-*` class is used, and
+     these rules reference the animation through a plain `animation:` shorthand.
+     A keyframe defined in the config would be tree-shaken away and the element
+     would silently freeze on its first frame. */
+  @keyframes caret-pulse {
+    0%,
+    100% {
+      opacity: 0.3;
+      transform: scale(0.75);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* The active segment of the pipeline track. Completed segments stay solid
+     ink; this one breathes, so the eye can tell "still working here" from
+     "already done here" without any text. */
+  .pipeline-active {
+    animation: pipeline-pulse 1.4s ease-in-out infinite;
+  }
+
+  @keyframes pipeline-pulse {
+    0%,
+    100% {
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  /* Staggered reveal of the source rows as the citations frame lands. The
+     class is dropped after the animation finishes (see `Citations`), because
+     the component re-renders on every streamed token and a CSS animation
+     would otherwise restart — and flash — dozens of times. */
+  .cite-row-in {
+    animation: cite-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes cite-in {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Waiting for the first token.
+     Skeleton lines, not dots: the answer is being assembled from the sources,
+     so showing the *shape* of text appearing is both prettier and more honest
+     than three dots that promise nothing. Widths vary like real paragraphs. */
+  .answer-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .answer-skeleton > span {
+    display: block;
+    height: 0.625rem;
+    border-radius: 9999px;
+    background: linear-gradient(
+      100deg,
+      hsl(var(--ink) / 0.05) 0%,
+      hsl(var(--ink) / 0.09) 42%,
+      hsl(var(--ink) / 0.05) 84%
+    );
+    background-size: 220% 100%;
+    animation: skeleton-sweep 1.9s ease-in-out infinite;
+    /* `backwards` makes a delayed line hold the 0% frame while it waits, so the
+       stagger reads as a cascade instead of three bars snapping out of place. */
+    animation-fill-mode: backwards;
+  }
+
+  /* Each line is offset from the last so the block reads as a paragraph
+     rather than a barcode. */
+  .answer-skeleton > span:nth-child(2) {
+    width: 88%;
+    animation-delay: 0.12s;
+  }
+
+  .answer-skeleton > span:nth-child(3) {
+    width: 62%;
+    animation-delay: 0.24s;
+  }
+
+  /* Same reason as `caret-pulse` above: this keyframe has to live beside the
+     rule that animates with it, or Tailwind drops it and the skeleton stops
+     moving. */
+  @keyframes skeleton-sweep {
+    0% {
+      background-position: 180% 0;
+    }
+    100% {
+      background-position: -80% 0;
+    }
+  }
+
+  .prose-doc {
+    @apply text-[15px] leading-[1.7] text-foreground;
+    /* Long unbroken strings (URLs, part numbers, filenames inside the
+       model's answer) must wrap instead of widening the bubble. */
+    overflow-wrap: anywhere;
+  }
+  .prose-doc p { @apply my-3; }
+  .prose-doc strong { @apply font-semibold text-ink; }
+  .prose-doc em { @apply italic; }
+  .prose-doc code {
+    @apply rounded-md bg-muted px-1.5 py-0.5 font-mono text-[0.85em];
+  }
+  .prose-doc ul { @apply my-5 list-disc pl-6 space-y-1.5; }
+  .prose-doc ol { @apply my-5 list-decimal pl-6 space-y-1.5; }
+  .prose-doc li { @apply leading-[1.7]; }
+  .prose-doc h1, .prose-doc h2, .prose-doc h3, .prose-doc h4 {
+    @apply font-display tracking-tight;
+  }
+  .prose-doc h2 { @apply text-2xl mt-6 mb-3; }
+  .prose-doc h3 { @apply text-xl mt-5 mb-2; }
+  .prose-doc .cite {
+    @apply inline-flex items-center justify-center
+           min-w-[1.5rem] h-5 px-1.5 rounded-md
+           bg-ember/10 text-ember
+           text-[0.72rem] font-semibold tracking-wide
+           no-underline align-baseline
+           transition-colors;
+    font-feature-settings: "tnum";
+  }
+  .prose-doc .cite:hover {
+    @apply bg-ember/20;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .caret,
+    .answer-skeleton > span,
+    .pipeline-active,
+    .cite-row-in { animation: none; }
+  }
+}
